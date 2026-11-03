@@ -1,0 +1,174 @@
+import numpy as np
+import random
+
+# Create 4x4 Grid World
+rows, cols = 4, 4
+
+start_state = (0, 0)
+goal_state = (3, 3)
+obstacle = (1, 1)
+
+actions = ["up", "down", "left", "right"]
+
+q_table = np.zeros((rows * cols, len(actions)))
+
+# Q-Learning Parameters
+learning_rate = 0.1
+discount_factor = 0.9
+
+epsilon = 1.0
+epsilon_decay = 0.995
+minimum_epsilon = 0.05
+
+episodes = 3000
+max_steps = 50
+
+
+def state_number(position):
+    return position[0] * cols + position[1]
+
+
+def take_action(position, action):
+
+    r, c = position
+
+    if action == "up":
+        r -= 1
+
+    elif action == "down":
+        r += 1
+
+    elif action == "left":
+        c -= 1
+
+    elif action == "right":
+        c += 1
+
+    # Keep agent inside the grid
+    r = max(0, min(rows - 1, r))
+    c = max(0, min(cols - 1, c))
+
+    new_position = (r, c)
+
+    # Obstacle penalty
+    if new_position == obstacle:
+        return position, -5, False
+
+    # Goal reward
+    if new_position == goal_state:
+        return new_position, 10, True
+
+    return new_position, -1, False
+
+
+# Training the Agent
+for episode in range(episodes):
+
+    position = start_state
+
+    for step in range(max_steps):
+
+        current_state = state_number(position)
+
+        # Exploration and Exploitation
+        if random.random() < epsilon:
+
+            action_index = random.randrange(len(actions))
+
+        else:
+
+            action_index = int(
+                np.argmax(q_table[current_state])
+            )
+
+        action = actions[action_index]
+
+        next_position, reward, done = take_action(
+            position, action
+        )
+
+        next_state = state_number(next_position)
+
+        # Q-Learning Update Formula
+        old_value = q_table[current_state, action_index]
+
+        next_max = np.max(q_table[next_state])
+
+        q_table[current_state, action_index] = (
+            old_value + learning_rate *
+            (reward + discount_factor * next_max - old_value)
+        )
+
+        position = next_position
+
+        if done:
+            break
+
+    epsilon = max(
+        minimum_epsilon,
+        epsilon * epsilon_decay
+    )
+
+
+# Display Learned Policy
+print("Learned Policy:")
+
+symbols = {
+    "up": "^",
+    "down": "v",
+    "left": "<",
+    "right": ">"
+}
+
+for r in range(rows):
+
+    row_output = []
+
+    for c in range(cols):
+
+        position = (r, c)
+
+        if position == goal_state:
+
+            row_output.append("G")
+
+        elif position == obstacle:
+
+            row_output.append("#")
+
+        else:
+
+            best_action = actions[
+                int(np.argmax(q_table[state_number(position)]))
+            ]
+
+            row_output.append(symbols[best_action])
+
+    print(" ".join(row_output))
+
+
+# Test the Learned Policy
+position = start_state
+path = [position]
+
+for step in range(max_steps):
+
+    state = state_number(position)
+
+    action = actions[
+        int(np.argmax(q_table[state]))
+    ]
+
+    position, reward, done = take_action(
+        position, action
+    )
+
+    path.append(position)
+
+    if done:
+        break
+
+print("\nPath Followed by Agent:")
+print(path)
+
+print("Goal Reached:", position == goal_state)
