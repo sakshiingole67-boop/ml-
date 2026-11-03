@@ -1,0 +1,62 @@
+import pandas as pd
+import time
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+df = pd.read_csv("data.csv")
+
+df = df.drop(columns=["id", "Unnamed: 32"], errors="ignore")
+
+if "diagnosis" not in df.columns:
+    raise ValueError("Diagnosis column not found.")
+
+y = LabelEncoder().fit_transform(df["diagnosis"])
+X = df.drop(columns=["diagnosis"])
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# PCA
+start = time.time()
+
+pca = PCA(n_components=2)
+X_train_pca = pca.fit_transform(X_train)
+X_test_pca = pca.transform(X_test)
+
+pca_model = LogisticRegression(max_iter=2000)
+pca_model.fit(X_train_pca, y_train)
+
+pca_pred = pca_model.predict(X_test_pca)
+pca_time = time.time() - start
+
+# LDA
+start = time.time()
+
+lda = LinearDiscriminantAnalysis(n_components=1)
+X_train_lda = lda.fit_transform(X_train, y_train)
+X_test_lda = lda.transform(X_test)
+
+lda_model = LogisticRegression(max_iter=2000)
+lda_model.fit(X_train_lda, y_train)
+
+lda_pred = lda_model.predict(X_test_lda)
+lda_time = time.time() - start
+
+print("PCA Accuracy:", round(accuracy_score(y_test, pca_pred), 4))
+print("LDA Accuracy:", round(accuracy_score(y_test, lda_pred), 4))
+
+print("PCA Execution Time:", round(pca_time, 4))
+print("LDA Execution Time:", round(lda_time, 4))
+
+print("PCA Explained Variance:",
+      round(sum(pca.explained_variance_ratio_), 4))
