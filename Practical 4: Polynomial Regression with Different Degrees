@@ -1,0 +1,57 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+
+df = pd.read_csv("Salary_Data.csv")
+
+df.columns = df.columns.str.strip()
+
+columns = {
+    name.lower().replace(" ", ""): name
+    for name in df.columns
+}
+
+x_name = columns.get("yearsexperience")
+y_name = columns.get("salary")
+
+if x_name is None or y_name is None:
+    raise ValueError("Required columns not found.")
+
+X = df[[x_name]]
+y = df[y_name]
+
+plt.scatter(X, y, color="blue", label="Actual Data")
+
+for degree in [1, 2, 3, 5]:
+
+    poly = PolynomialFeatures(degree=degree)
+
+    X_poly = poly.fit_transform(X)
+
+    model = LinearRegression()
+    model.fit(X_poly, y)
+
+    predictions = model.predict(X_poly)
+
+    print(
+        f"Degree {degree} R2 Score:",
+        round(r2_score(y, predictions), 4)
+    )
+
+    order = X.iloc[:, 0].argsort()
+
+    plt.plot(
+        X.iloc[order, 0],
+        predictions[order],
+        label=f"Degree {degree}"
+    )
+
+plt.xlabel("Years of Experience")
+plt.ylabel("Salary")
+plt.title("Polynomial Regression")
+
+plt.legend()
+plt.show()
