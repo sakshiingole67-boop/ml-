@@ -1,0 +1,59 @@
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+data = load_iris()
+
+X = data.data
+
+scaler = StandardScaler()
+
+X_scaled = scaler.fit_transform(X)
+
+wcss = []
+
+print("Silhouette Scores:")
+
+for k in range(2, 11):
+
+    kmeans = KMeans(
+        n_clusters=k,
+        random_state=42,
+        n_init=10
+    )
+
+    labels = kmeans.fit_predict(X_scaled)
+
+    wcss.append(kmeans.inertia_)
+
+    score = silhouette_score(X_scaled, labels)
+
+    print(
+        f"K = {k}, Silhouette Score = {score:.4f}"
+    )
+
+# Elbow Method
+plt.plot(range(2, 11), wcss, marker="o")
+
+plt.xlabel("Number of Clusters (K)")
+plt.ylabel("WCSS")
+
+plt.title("Elbow Method")
+
+plt.show()
+
+# Final Clustering
+final_model = KMeans(
+    n_clusters=3,
+    random_state=42,
+    n_init=10
+)
+
+clusters = final_model.fit_predict(X_scaled)
+
+print("\nFinal Cluster Labels:")
+print(clusters)
