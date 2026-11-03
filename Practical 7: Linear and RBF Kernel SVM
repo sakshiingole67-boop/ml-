@@ -1,0 +1,52 @@
+from sklearn.datasets import load_breast_cancer
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+from sklearn.svm import SVC
+
+from sklearn.metrics import accuracy_score, classification_report
+
+data = load_breast_cancer()
+
+X = data.data
+y = data.target
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Linear SVM
+linear_svm = SVC(kernel="linear")
+
+linear_svm.fit(X_train, y_train)
+
+linear_pred = linear_svm.predict(X_test)
+
+# RBF SVM
+rbf_svm = SVC(kernel="rbf")
+
+rbf_svm.fit(X_train, y_train)
+
+rbf_pred = rbf_svm.predict(X_test)
+
+print("Linear SVM Accuracy:",
+      round(accuracy_score(y_test, linear_pred), 4))
+
+print("RBF SVM Accuracy:",
+      round(accuracy_score(y_test, rbf_pred), 4))
+
+print("\nLinear SVM Classification Report:")
+print(classification_report(
+    y_test, linear_pred, target_names=data.target_names
+))
+
+print("\nRBF SVM Classification Report:")
+print(classification_report(
+    y_test, rbf_pred, target_names=data.target_names
+))
