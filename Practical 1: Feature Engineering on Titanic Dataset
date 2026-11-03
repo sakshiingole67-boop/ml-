@@ -1,0 +1,35 @@
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+
+df = pd.read_csv("train.csv")
+
+print("Original Dataset:")
+print(df.head())
+
+print("\nMissing values before preprocessing:")
+print(df[["Age", "Embarked"]].isnull().sum())
+
+# Handle missing values
+df["Age"] = df["Age"].fillna(df["Age"].mean())
+df["Embarked"] = df["Embarked"].fillna(df["Embarked"].mode()[0])
+
+# Encode categorical columns
+sex_encoder = LabelEncoder()
+embarked_encoder = LabelEncoder()
+
+df["Sex"] = sex_encoder.fit_transform(df["Sex"])
+df["Embarked"] = embarked_encoder.fit_transform(df["Embarked"])
+
+# Scale numerical columns
+scaler = StandardScaler()
+df[["Age", "Fare"]] = scaler.fit_transform(df[["Age", "Fare"]])
+
+print("\nMissing values after preprocessing:")
+print(df[["Age", "Embarked"]].isnull().sum())
+
+print("\nPreprocessed Dataset:")
+print(df[["Age", "Fare", "Sex", "Embarked"]].head())
+
+df.to_csv("titanic_preprocessed.csv", index=False)
+
+print("\nClean dataset saved successfully!")
